@@ -1,0 +1,2 @@
+# EclipseMacros
+Provide Eclipse macros
