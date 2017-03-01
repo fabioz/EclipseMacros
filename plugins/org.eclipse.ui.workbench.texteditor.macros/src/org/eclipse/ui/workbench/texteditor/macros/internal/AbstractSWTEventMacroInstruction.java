@@ -1,4 +1,4 @@
-package org.eclipse.e4.ui.macros.macroinstructions;
+package org.eclipse.ui.workbench.texteditor.macros.internal;
 
 import java.util.HashMap;
 import java.util.Map;
