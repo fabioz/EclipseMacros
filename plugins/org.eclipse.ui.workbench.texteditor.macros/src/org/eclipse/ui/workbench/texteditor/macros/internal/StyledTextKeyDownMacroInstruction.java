@@ -10,17 +10,12 @@
  *******************************************************************************/
 package org.eclipse.ui.workbench.texteditor.macros.internal;
 
-import java.util.HashMap;
 import java.util.Map;
-
-import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Event;
-
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -29,31 +24,12 @@ import org.eclipse.ui.PlatformUI;
 /**
  * A macro instruction to replay a key down (always followed by a key up).
  */
-/* default */ class StyledTextKeyDownMacroInstruction implements IMacroInstruction {
+/* default */ class StyledTextKeyDownMacroInstruction extends AbstractSWTEventMacroInstruction {
 
 	private static final String ID = "org.eclipse.ui.texteditor.macro.styledTextKeyDownMacroInstruction"; //$NON-NLS-1$
 
-	private static final String CHARACTER = "character"; //$NON-NLS-1$
-
-	private static final String TYPE = "type"; //$NON-NLS-1$
-
-	private static final String STATE_MASK = "stateMask"; //$NON-NLS-1$
-
-	private static final String KEY_CODE = "keyCode"; //$NON-NLS-1$
-
-	private Event fEvent;
-
 	public StyledTextKeyDownMacroInstruction(Event event) {
-		// Create a new event (we want to make sure that only the given info is
-		// really needed on playback and don't want to keep a reference to the
-		// original widget).
-		Event newEvent = new Event();
-		newEvent.keyCode = event.keyCode;
-		newEvent.stateMask = event.stateMask;
-		newEvent.type = event.type;
-		newEvent.character = event.character;
-
-		this.fEvent = newEvent;
+		super(event);
 	}
 
 	@Override
@@ -76,13 +52,15 @@ import org.eclipse.ui.PlatformUI;
 			styledText.notifyListeners(SWT.KeyDown, fEvent);
 
 			// Key up is also needed to update the clipboard.
-			Event keyUpEvent = new Event();
-			keyUpEvent.keyCode = fEvent.keyCode;
-			keyUpEvent.stateMask = fEvent.stateMask;
+			Event keyUpEvent = copyEvent(fEvent);
 			keyUpEvent.type = SWT.KeyUp;
-			keyUpEvent.character = fEvent.character;
 			styledText.notifyListeners(SWT.KeyUp, keyUpEvent);
 		}
+	}
+
+	@Override
+	protected int getEventType() {
+		return SWT.KeyDown;
 	}
 
 	@Override
@@ -90,31 +68,9 @@ import org.eclipse.ui.PlatformUI;
 		return ID;
 	}
 
-	@SuppressWarnings("boxing")
-	@Override
-	public String toString() {
-		if (this.fEvent == null) {
-			return String.format(Messages.StyledTextKeyDownMacroInstruction_Key, "null"); //$NON-NLS-1$
-		}
-		return String.format(Messages.StyledTextKeyDownMacroInstruction_Key, this.fEvent.character);
-	}
-
-	@Override
-	public Map<String, String> toMap() {
-		Map<String, String> map = new HashMap<>();
-		map.put(KEY_CODE, Integer.toString(fEvent.keyCode));
-		map.put(STATE_MASK, Integer.toString(fEvent.stateMask));
-		map.put(TYPE, Integer.toString(fEvent.type));
-		map.put(CHARACTER, Character.toString(fEvent.character));
-		return map;
-	}
-
 	/* default */ static StyledTextKeyDownMacroInstruction fromMap(Map<String, String> map) {
-		Event event = new Event();
-		event.keyCode = Integer.parseInt(map.get(KEY_CODE));
-		event.stateMask = Integer.parseInt(map.get(STATE_MASK));
-		event.type = Integer.parseInt(map.get(TYPE));
-		event.character = map.get(CHARACTER).charAt(0);
+		Event event = createEventFromMap(map, SWT.KeyDown);
 		return new StyledTextKeyDownMacroInstruction(event);
 	}
+
 }
