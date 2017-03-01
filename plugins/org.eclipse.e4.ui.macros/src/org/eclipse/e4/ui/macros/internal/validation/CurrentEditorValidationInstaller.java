@@ -59,6 +59,11 @@ public class CurrentEditorValidationInstaller implements IMacroStateListener {
 			}
 			return activePage.getActiveEditor();
 		}
+
+		@Override
+		public void afterMacroInstructionAdded(IMacroInstruction macroInstruction) {
+
+		}
 	}
 
 	private CurrentEditorValidator fCurrentEditorValidator;

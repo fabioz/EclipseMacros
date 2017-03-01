@@ -91,9 +91,9 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 	@Override
 	public String toString() {
 		try {
-			return Messages.MacroInstructionForParameterizedCommand_0 + this.fCmd.getName();
+			return String.format(Messages.MacroInstructionForParameterizedCommand_0, this.fCmd.getName());
 		} catch (NotDefinedException e) {
-			return Messages.MacroInstructionForParameterizedCommand_0 + "Undefined"; //$NON-NLS-1$
+			return String.format(Messages.MacroInstructionForParameterizedCommand_0, "Undefined"); //$NON-NLS-1$
 		}
 	}
 

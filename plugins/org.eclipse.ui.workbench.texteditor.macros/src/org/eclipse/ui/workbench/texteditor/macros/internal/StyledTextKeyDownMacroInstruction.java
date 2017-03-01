@@ -12,6 +12,7 @@ package org.eclipse.ui.workbench.texteditor.macros.internal;
 
 import java.util.Map;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
+import org.eclipse.e4.core.macros.internal.JSONHelper;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.widgets.Control;
@@ -73,4 +74,13 @@ import org.eclipse.ui.PlatformUI;
 		return new StyledTextKeyDownMacroInstruction(event);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return Messages.StyledTextKeyDownMacroInstruction_KeyDown + JSONHelper.quote(Character.toString(this.fEvent.character));
+	}
 }

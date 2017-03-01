@@ -95,7 +95,8 @@ public class KeyBindingDispatcherInterceptor implements IKeyBindingInterceptor {
 			// Ok, allow it to go through.
 			return false;
 		}
-		UserNotifications.showErrorMessage(Messages.KeyBindingDispatcherInterceptor_SkipExecutionOfCommand + cmd.getId());
+		UserNotifications.showErrorMessage(
+				String.format(Messages.KeyBindingDispatcherInterceptor_SkipExecutionOfCommand, cmd.getId()));
 		return true;
 	}
 

@@ -73,10 +73,11 @@ import org.eclipse.e4.core.macros.IMacroPlaybackContext;
 	 *            the macro instruction to be checked.
 	 */
 	private void checkMacroInstruction(IMacroInstruction macroInstruction) {
-		if (fMacroInstructionIdToFactory != null && !fMacroInstructionIdToFactory.containsKey(macroInstruction.getId())) {
-			throw new RuntimeException(
-					String.format("Macro instruction: %s not properly registered through a %s extension point.", //$NON-NLS-1$
-							macroInstruction.getId(), MacroServiceImplementation.MACRO_INSTRUCTION_FACTORY_EXTENSION_POINT));
+		if (fMacroInstructionIdToFactory != null
+				&& !fMacroInstructionIdToFactory.containsKey(macroInstruction.getId())) {
+			throw new RuntimeException(String.format(
+					"Macro instruction: %s not properly registered through a %s extension point.", //$NON-NLS-1$
+					macroInstruction.getId(), MacroServiceImplementation.MACRO_INSTRUCTION_FACTORY_EXTENSION_POINT));
 		}
 	}
 
@@ -111,21 +112,25 @@ import org.eclipse.e4.core.macros.IMacroPlaybackContext;
 	 *            the priority of the macro instruction being added (to be
 	 *            compared against the priority of other added macro
 	 *            instructions for the same event).
+	 * @return true if the macro instruction was actually added and false
+	 *         otherwise.
 	 * @see #addMacroInstruction(IMacroInstruction)
 	 */
-	public void addMacroInstruction(IMacroInstruction macroInstruction, Object event, int priority) {
+	public boolean addMacroInstruction(IMacroInstruction macroInstruction, Object event, int priority) {
 		Assert.isNotNull(event);
 		IndexAndPriority currentIndexAndPriority = this.fEventToPlacement.get(event);
 		if (currentIndexAndPriority == null) {
 			this.addMacroInstruction(macroInstruction);
 			this.fEventToPlacement.put(event, new IndexAndPriority(this.fMacroInstructions.size() - 1, priority));
-		} else {
-			if (priority >= currentIndexAndPriority.fPriority) {
-				checkMacroInstruction(macroInstruction);
-				fMacroInstructions.set(currentIndexAndPriority.fIndex, macroInstruction);
-				this.fEventToPlacement.put(event, new IndexAndPriority(currentIndexAndPriority.fIndex, priority));
-			}
+			return true;
 		}
+		if (priority >= currentIndexAndPriority.fPriority) {
+			checkMacroInstruction(macroInstruction);
+			fMacroInstructions.set(currentIndexAndPriority.fIndex, macroInstruction);
+			this.fEventToPlacement.put(event, new IndexAndPriority(currentIndexAndPriority.fIndex, priority));
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -142,7 +147,6 @@ import org.eclipse.e4.core.macros.IMacroPlaybackContext;
 			macroInstruction.execute(macroPlaybackContext);
 		}
 	}
-
 
 	/**
 	 * Actually returns the bytes to be written to the disk to be loaded back

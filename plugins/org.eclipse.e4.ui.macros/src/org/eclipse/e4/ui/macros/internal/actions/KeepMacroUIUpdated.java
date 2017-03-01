@@ -11,6 +11,8 @@
 package org.eclipse.e4.ui.macros.internal.actions;
 
 import org.eclipse.e4.core.macros.EMacroService;
+import org.eclipse.e4.core.macros.IMacroInstruction;
+import org.eclipse.e4.core.macros.IMacroInstructionsListener;
 import org.eclipse.e4.core.macros.IMacroStateListener;
 import org.eclipse.e4.ui.macros.internal.UserNotifications;
 import org.eclipse.ui.PlatformUI;
@@ -22,9 +24,27 @@ import org.eclipse.ui.commands.ICommandService;
  */
 public class KeepMacroUIUpdated implements IMacroStateListener {
 
+	/**
+	 * A listener which will show messages to the user while he types macro
+	 * instructions.
+	 */
+	private static final class MacroInstructionsListener implements IMacroInstructionsListener {
+		@Override
+		public void beforeMacroInstructionAdded(IMacroInstruction macroInstruction) {
+
+		}
+
+		@Override
+		public void afterMacroInstructionAdded(IMacroInstruction macroInstruction) {
+			UserNotifications.setMessage(Messages.KeepMacroUIUpdated_RecordedInMacro + macroInstruction);
+		}
+	}
+
 	boolean wasRecording = false;
 
 	boolean wasPlayingBack = false;
+
+	IMacroInstructionsListener fMacroInstructionsListener;
 
 	@Override
 	public void macroStateChanged(EMacroService macroService) {
@@ -50,6 +70,18 @@ public class KeepMacroUIUpdated implements IMacroStateListener {
 				UserNotifications.setMessage(null);
 			}
 			wasPlayingBack = macroService.isPlayingBack();
+		}
+
+		if (macroService.isRecording()) {
+			if (fMacroInstructionsListener == null) {
+				fMacroInstructionsListener = new MacroInstructionsListener();
+				macroService.addMacroInstructionsListener(fMacroInstructionsListener);
+			}
+		} else {
+			if (fMacroInstructionsListener != null) {
+				macroService.removeMacroInstructionsListener(fMacroInstructionsListener);
+				fMacroInstructionsListener = null;
+			}
 		}
 	}
 }

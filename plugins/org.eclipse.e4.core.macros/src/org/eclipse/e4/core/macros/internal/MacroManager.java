@@ -141,13 +141,15 @@ public class MacroManager {
 	 * @throws CancelMacroRecordingException
 	 */
 	public void addMacroInstruction(IMacroInstruction macroInstruction) throws CancelMacroRecordingException {
-		for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
-			listener.beforeMacroInstructionAdded(macroInstruction);
-		}
-
 		ComposableMacro macroBeingRecorded = fMacroBeingRecorded;
 		if (macroBeingRecorded != null) {
+			for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
+				listener.beforeMacroInstructionAdded(macroInstruction);
+			}
 			macroBeingRecorded.addMacroInstruction(macroInstruction);
+			for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
+				listener.afterMacroInstructionAdded(macroInstruction);
+			}
 		}
 	}
 
@@ -180,15 +182,18 @@ public class MacroManager {
 	 */
 	public void addMacroInstruction(IMacroInstruction macroInstruction, Object event, int priority)
 			throws CancelMacroRecordingException {
-		for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
-			listener.beforeMacroInstructionAdded(macroInstruction);
-		}
 		ComposableMacro macroBeingRecorded = fMacroBeingRecorded;
 		if (macroBeingRecorded != null) {
-			macroBeingRecorded.addMacroInstruction(macroInstruction, event, priority);
+			for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
+				listener.beforeMacroInstructionAdded(macroInstruction);
+			}
+			if (macroBeingRecorded.addMacroInstruction(macroInstruction, event, priority)) {
+				for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
+					listener.afterMacroInstructionAdded(macroInstruction);
+				}
+			}
 		}
 	}
-
 
 	/**
 	 * Toggles the macro record (either starts recording or stops an existing
@@ -225,7 +230,6 @@ public class MacroManager {
 			notifyMacroStateChange(macroService);
 		}
 	}
-
 
 	/**
 	 * Helper class to store a path an a time.
@@ -434,7 +438,6 @@ public class MacroManager {
 	}
 
 	private final ListenerList<IMacroInstructionsListener> fMacroInstructionsListeners = new ListenerList<>();
-
 
 	/**
 	 * Adds a macro instructions listener (it may be added to validate the
