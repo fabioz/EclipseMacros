@@ -197,4 +197,21 @@ public interface EMacroService {
 	@SuppressWarnings("javadoc")
 	Set<String> getCommandsWhitelisted();
 
+	/**
+	 * Adds a macro instructions listener (it may be added to validate the
+	 * current state of the macro recording).
+	 *
+	 * @param macroInstructionsListener
+	 *            the listener for macro instructions.
+	 */
+	void addMacroInstructionsListener(IMacroInstructionsListener macroInstructionsListener);
+
+	/**
+	 * Removes a macro instructions listener.
+	 *
+	 * @param macroInstructionsListener
+	 *            the listener for macro instructions.
+	 */
+	void removeMacroInstructionsListener(IMacroInstructionsListener macroInstructionsListener);
+
 }

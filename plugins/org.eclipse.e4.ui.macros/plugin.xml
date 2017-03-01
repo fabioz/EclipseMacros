@@ -4,10 +4,12 @@
 
    <extension
          point="org.eclipse.e4.core.macros.whitelistedCommands">
-      <whitelistedCommand
-            id="org.eclipse.e4.ui.macros.toggleRecordMacro"
-            recordMacroInstruction="false">
-      </whitelistedCommand>
+         
+      <!-- We should be able to stop the macro recording after the recording started. -->
+      <whitelistedCommand id="org.eclipse.e4.ui.macros.toggleRecordMacro" recordMacroInstruction="false"/>
+      
+      <!-- Playback is Ok during recording, but only its side-effects are recorded, not the command itself. -->
+      <whitelistedCommand id="org.eclipse.e4.ui.macros.macroPlayback" recordMacroInstruction="false"/>
    </extension>
 
    <extension
@@ -22,6 +24,12 @@
          point="org.eclipse.e4.core.macros.macroStateListeners">
       <macroStateListener
             class="org.eclipse.e4.ui.macros.internal.keybindings.KeyBindingDispatcherInterceptorInstaller">
+      </macroStateListener>
+      <macroStateListener
+            class="org.eclipse.e4.ui.macros.internal.validation.CurrentEditorValidationInstaller">
+      </macroStateListener>
+      <macroStateListener
+            class="org.eclipse.e4.ui.macros.internal.actions.KeepRecordMacroToggleActionStateUpdated">
       </macroStateListener>
    </extension>
 

@@ -23,9 +23,11 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.e4.core.contexts.ContextInjectionFactory;
 import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.core.macros.Activator;
+import org.eclipse.e4.core.macros.CancelMacroRecordingException;
 import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroInstructionFactory;
+import org.eclipse.e4.core.macros.IMacroInstructionsListener;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
 import org.eclipse.e4.core.macros.IMacroStateListener;
 
@@ -182,12 +184,33 @@ public class MacroServiceImplementation implements EMacroService {
 
 	@Override
 	public void addMacroInstruction(IMacroInstruction macroInstruction) {
-		getMacroManager().addMacroInstruction(macroInstruction);
+		if (this.isRecording()) {
+			try {
+				getMacroManager().addMacroInstruction(macroInstruction);
+			} catch (CancelMacroRecordingException e) {
+				stopMacroRecording();
+			}
+		}
 	}
 
 	@Override
 	public void addMacroInstruction(IMacroInstruction macroInstruction, Object event, int priority) {
-		getMacroManager().addMacroInstruction(macroInstruction, event, priority);
+		if (this.isRecording()) {
+			try {
+				getMacroManager().addMacroInstruction(macroInstruction, event, priority);
+			} catch (CancelMacroRecordingException e) {
+				stopMacroRecording();
+			}
+		}
+	}
+
+	/**
+	 * Stops the macro recording.
+	 */
+	private void stopMacroRecording() {
+		if (this.isRecording()) {
+			this.toggleMacroRecord();
+		}
 	}
 
 	@Override
@@ -283,4 +306,13 @@ public class MacroServiceImplementation implements EMacroService {
 		return new HashSet<>(internalWhitelistedCommands.keySet());
 	}
 
+	@Override
+	public void addMacroInstructionsListener(IMacroInstructionsListener macroInstructionsListener) {
+		getMacroManager().addMacroInstructionsListener(macroInstructionsListener);
+	}
+
+	@Override
+	public void removeMacroInstructionsListener(IMacroInstructionsListener macroInstructionsListener) {
+		getMacroManager().removeMacroInstructionsListener(macroInstructionsListener);
+	}
 }

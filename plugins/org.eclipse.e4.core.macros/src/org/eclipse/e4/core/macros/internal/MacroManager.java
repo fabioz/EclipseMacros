@@ -28,9 +28,11 @@ import org.eclipse.core.runtime.ISafeRunnable;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.core.runtime.SafeRunner;
 import org.eclipse.e4.core.macros.Activator;
+import org.eclipse.e4.core.macros.CancelMacroRecordingException;
 import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroInstructionFactory;
+import org.eclipse.e4.core.macros.IMacroInstructionsListener;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
 import org.eclipse.e4.core.macros.IMacroStateListener;
 
@@ -131,13 +133,18 @@ public class MacroManager {
 	}
 
 	/**
-	 * Adds a macro instruction to the macro currently being recorded. Does nothing
-	 * if no macro is being recorded.
+	 * Adds a macro instruction to the macro currently being recorded. Does
+	 * nothing if no macro is being recorded.
 	 *
 	 * @param macroInstruction
 	 *            the macro instruction to be recorded.
+	 * @throws CancelMacroRecordingException
 	 */
-	public void addMacroInstruction(IMacroInstruction macroInstruction) {
+	public void addMacroInstruction(IMacroInstruction macroInstruction) throws CancelMacroRecordingException {
+		for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
+			listener.beforeMacroInstructionAdded(macroInstruction);
+		}
+
 		ComposableMacro macroBeingRecorded = fMacroBeingRecorded;
 		if (macroBeingRecorded != null) {
 			macroBeingRecorded.addMacroInstruction(macroInstruction);
@@ -168,14 +175,20 @@ public class MacroManager {
 	 *            the priority of the macro instruction being added (to be
 	 *            compared against the priority of other added macro
 	 *            instructions for the same event).
+	 * @throws CancelMacroRecordingException
 	 * @see #addMacroInstruction(IMacroInstruction)
 	 */
-	public void addMacroInstruction(IMacroInstruction macroInstruction, Object event, int priority) {
+	public void addMacroInstruction(IMacroInstruction macroInstruction, Object event, int priority)
+			throws CancelMacroRecordingException {
+		for (IMacroInstructionsListener listener : fMacroInstructionsListeners) {
+			listener.beforeMacroInstructionAdded(macroInstruction);
+		}
 		ComposableMacro macroBeingRecorded = fMacroBeingRecorded;
 		if (macroBeingRecorded != null) {
 			macroBeingRecorded.addMacroInstruction(macroInstruction, event, priority);
 		}
 	}
+
 
 	/**
 	 * Toggles the macro record (either starts recording or stops an existing
@@ -211,8 +224,8 @@ public class MacroManager {
 		} finally {
 			notifyMacroStateChange(macroService);
 		}
-
 	}
+
 
 	/**
 	 * Helper class to store a path an a time.
@@ -418,6 +431,30 @@ public class MacroManager {
 				Activator.log(new RuntimeException(String.format("Expected: %s to be a directory.", macroDirectory))); //$NON-NLS-1$
 			}
 		}
+	}
+
+	private final ListenerList<IMacroInstructionsListener> fMacroInstructionsListeners = new ListenerList<>();
+
+
+	/**
+	 * Adds a macro instructions listener (it may be added to validate the
+	 * current state of the macro recording).
+	 *
+	 * @param macroInstructionsListener
+	 *            the listener for macro instructions.
+	 */
+	public void addMacroInstructionsListener(IMacroInstructionsListener macroInstructionsListener) {
+		fMacroInstructionsListeners.add(macroInstructionsListener);
+	}
+
+	/**
+	 * Removes a macro instructions listener.
+	 *
+	 * @param macroInstructionsListener
+	 *            the listener for macro instructions.
+	 */
+	public void removeMacroInstructionsListener(IMacroInstructionsListener macroInstructionsListener) {
+		fMacroInstructionsListeners.remove(macroInstructionsListener);
 	}
 
 }

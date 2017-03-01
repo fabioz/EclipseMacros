@@ -38,7 +38,8 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 	public void postExecuteSuccess(String commandId, Object returnValue) {
 		if (fMacroService.isRecording() && !fMacroService.isCommandWhitelisted(commandId)) {
 			System.out.println(fCommandManager);
-			System.out.println("Non-whitelisted command got through (TODO: warn user)."); //$NON-NLS-1$
+			System.out.println(String
+					.format("Non-whitelisted command (%s) executed but not recorded (TODO: warn user).", commandId)); //$NON-NLS-1$
 		}
 	}
 
