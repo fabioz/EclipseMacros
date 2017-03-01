@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.e4.core.macros.macroStateListeners">
+      <macroStateListener
+            class="org.eclipse.ui.workbench.texteditor.macros.internal.EditorPartMacroInstaller">
+      </macroStateListener>
+   </extension>
+   
+   <extension
+         point="org.eclipse.e4.core.macros.macroInstructionsFactory">
+      <macroInstructionsFactory
+            class="org.eclipse.ui.workbench.texteditor.macros.internal.StyledTextKeyDownMacroInstructionFactory"
+            macroInstructionId="org.eclipse.ui.texteditor.macro.styledTextKeyDownMacroInstruction">
+      </macroInstructionsFactory>
+   </extension>
+
+
+</plugin>
