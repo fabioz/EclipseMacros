@@ -27,11 +27,14 @@ import org.eclipse.e4.ui.macros.internal.actions.ToggleMacroRecordAction;
 public class CommandManagerExecutionListener implements IExecutionListener {
 
 	private EMacroService fMacroService;
+
 	private KeyBindingDispatcherInterceptor fInterceptor;
 
 	/**
 	 * @param macroService
+	 *            the macro service
 	 * @param interceptor
+	 *            the interceptor which is used to actually record commands.
 	 */
 	public CommandManagerExecutionListener(EMacroService macroService, KeyBindingDispatcherInterceptor interceptor) {
 		this.fMacroService = macroService;
@@ -76,9 +79,7 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 		fInterceptor.clearLastCheckedCommand();
 	}
 
-
 	@Override
 	public void preExecute(String commandId, ExecutionEvent event) {
 	}
-
 }
