@@ -1,4 +1,4 @@
-package org.eclipse.ui.workbench.texteditor.macros.internal;
+package org.eclipse.e4.ui.macros.macroinstructions;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,8 +7,14 @@ import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.swt.widgets.Event;
 
 /**
- * Base classe for a macro instruction based on events from a given type.
+ * Base class for a macro instruction based on events from a given type.
  *
+ * Note that it doesn't store all the information on events, only character,
+ * stateMask, keyCode, keyLocation and detail (and the actual type is meant to
+ * be gotten from the class which overrides it or passed when needed).
+ *
+ * The actual fields that it stores may grow over time (and when restored, if
+ * those weren't properly saved, default values should be used).
  */
 public abstract class AbstractSWTEventMacroInstruction implements IMacroInstruction {
 
@@ -20,6 +26,8 @@ public abstract class AbstractSWTEventMacroInstruction implements IMacroInstruct
 	private static final String KEY_CODE = "keyCode"; //$NON-NLS-1$
 
 	private static final String DETAIL = "detail"; //$NON-NLS-1$
+
+	private static final String KEY_LOCATION = "keyLocation"; //$NON-NLS-1$
 
 	protected final Event fEvent;
 
@@ -51,16 +59,21 @@ public abstract class AbstractSWTEventMacroInstruction implements IMacroInstruct
 	 *            the event to be copied.
 	 * @return a copy of the passed event.
 	 */
-	protected static Event copyEvent(Event event) {
+	protected Event copyEvent(Event event) {
 		Event newEvent = new Event();
 		newEvent.keyCode = event.keyCode;
 		newEvent.stateMask = event.stateMask;
 		newEvent.type = event.type;
 		newEvent.character = event.character;
 		newEvent.detail = event.detail;
+		newEvent.keyLocation = event.keyLocation;
 		return newEvent;
 	}
 
+	/**
+	 * Actually creates an event based on the contents previously gotten from
+	 * {@link #toMap()}.
+	 */
 	protected static Event createEventFromMap(Map<String, String> map, int eventType) {
 		Event event = new Event();
 		event.type = eventType;
@@ -92,6 +105,13 @@ public abstract class AbstractSWTEventMacroInstruction implements IMacroInstruct
 		} else {
 			event.detail = 0;
 		}
+
+		String keyLocation = map.get(KEY_LOCATION);
+		if (keyLocation != null) {
+			event.keyLocation = Integer.parseInt(keyLocation);
+		} else {
+			event.keyLocation = 0;
+		}
 		return event;
 	}
 
@@ -115,6 +135,10 @@ public abstract class AbstractSWTEventMacroInstruction implements IMacroInstruct
 
 		if (fEvent.detail != 0) {
 			map.put(DETAIL, Integer.toString(fEvent.detail));
+		}
+
+		if (fEvent.keyLocation != 0) {
+			map.put(KEY_LOCATION, Integer.toString(fEvent.keyLocation));
 		}
 		return map;
 	}
