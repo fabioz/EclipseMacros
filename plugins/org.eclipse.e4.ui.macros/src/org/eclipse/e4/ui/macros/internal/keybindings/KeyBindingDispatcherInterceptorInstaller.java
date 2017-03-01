@@ -44,7 +44,7 @@ public class KeyBindingDispatcherInterceptorInstaller implements IMacroStateList
 				fDispatcher.addInterceptor(fInterceptor);
 			}
 			if (fCommandManagerExecutionListener == null) {
-				fCommandManagerExecutionListener = new CommandManagerExecutionListener(fCommandManager, macroService);
+				fCommandManagerExecutionListener = new CommandManagerExecutionListener(macroService, fInterceptor);
 				fCommandManager.addExecutionListener(fCommandManagerExecutionListener);
 			}
 		} else {

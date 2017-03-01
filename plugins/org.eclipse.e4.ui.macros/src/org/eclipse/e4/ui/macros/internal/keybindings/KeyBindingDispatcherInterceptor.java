@@ -11,12 +11,10 @@
 package org.eclipse.e4.ui.macros.internal.keybindings;
 
 import org.eclipse.core.commands.ParameterizedCommand;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.e4.core.macros.Activator;
 import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.ui.bindings.keys.IKeyBindingInterceptor;
 import org.eclipse.e4.ui.bindings.keys.KeyBindingDispatcher;
+import org.eclipse.e4.ui.macros.internal.UserNotifications;
 import org.eclipse.swt.widgets.Event;
 
 /***
@@ -55,6 +53,11 @@ public class KeyBindingDispatcherInterceptor implements IKeyBindingInterceptor {
 	private KeyBindingDispatcher fKeybindingDispatcher;
 
 	/**
+	 * The id of the last command id we checked for execution.
+	 */
+	private String fLastCheckedCommandId;
+
+	/**
 	 * @param macroService
 	 *            the macro service to which this KeyBindingDispatcher is
 	 *            related.
@@ -84,19 +87,31 @@ public class KeyBindingDispatcherInterceptor implements IKeyBindingInterceptor {
 
 	@Override
 	public boolean executeCommand(ParameterizedCommand cmd, Event event) {
+		this.fLastCheckedCommandId = cmd.getId();
 		// We can only run the command if we're not recording/playing
 		// back or if it's accepted.
 		if (fMacroService == null || (!fMacroService.isRecording() && !fMacroService.isPlayingBack())
 				|| fMacroService.isCommandWhitelisted(cmd.getId())) {
-			// Ok, allow it to go through
+			// Ok, allow it to go through.
 			return false;
 		}
-		// Reject the command.
-		Activator plugin = Activator.getDefault();
-		if (plugin != null) {
-			plugin.getLog().log(new Status(IStatus.INFO, plugin.getBundle().getSymbolicName(),
-					"Skipping execution of command not whitelisted in macro: " + cmd.getId())); //$NON-NLS-1$
-		}
+		UserNotifications.showErrorMessage(Messages.KeyBindingDispatcherInterceptor_SkipExecutionOfCommand + cmd.getId());
 		return true;
+	}
+
+	/**
+	 * @return the command id of the last checked command (being whitelisted or
+	 *         not). Note that this is set prior to actually executing the
+	 *         command.
+	 */
+	public String getLastCheckedCommandId() {
+		return fLastCheckedCommandId;
+	}
+
+	/**
+	 * Clear the last checked command id.
+	 */
+	public void clearLastCheckedCommand() {
+		fLastCheckedCommandId = null;
 	}
 }

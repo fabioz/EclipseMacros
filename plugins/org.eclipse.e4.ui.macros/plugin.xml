@@ -29,7 +29,7 @@
             class="org.eclipse.e4.ui.macros.internal.validation.CurrentEditorValidationInstaller">
       </macroStateListener>
       <macroStateListener
-            class="org.eclipse.e4.ui.macros.internal.actions.KeepRecordMacroToggleActionStateUpdated">
+            class="org.eclipse.e4.ui.macros.internal.actions.KeepMacroUIUpdated">
       </macroStateListener>
    </extension>
 

@@ -8,7 +8,7 @@
  * Contributors:
  *     Fabio Zadrozny - initial API and implementation - http://eclip.se/8519
  *******************************************************************************/
-package org.eclipse.e4.ui.macros.internal.actions;
+package org.eclipse.e4.ui.macros.internal;
 
 import org.eclipse.osgi.util.NLS;
 
@@ -16,10 +16,8 @@ import org.eclipse.osgi.util.NLS;
  *
  */
 public class Messages extends NLS {
-	private static final String BUNDLE_NAME = "org.eclipse.e4.ui.macros.internal.actions.messages"; //$NON-NLS-1$
-	public static String KeepMacroUIUpdated_StartMacroRecord;
-	public static String KeepMacroUIUpdated_StartMacroPlayback;
-	public static String MacroConsole_MacroRecordPlayback;
+	private static final String BUNDLE_NAME = "org.eclipse.e4.ui.macros.internal.messages"; //$NON-NLS-1$
+	public static String Activator_ErrorMacroRecording;
 	static {
 		// initialize resource bundle
 		NLS.initializeMessages(BUNDLE_NAME, Messages.class);
