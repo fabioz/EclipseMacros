@@ -13,9 +13,9 @@ package org.eclipse.e4.ui.macros.internal.keybindings;
 import java.util.Map;
 import javax.inject.Inject;
 import org.eclipse.core.commands.CommandManager;
+import org.eclipse.e4.core.commands.EHandlerService;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroInstructionFactory;
-import org.eclipse.e4.ui.bindings.keys.KeyBindingDispatcher;
 
 /**
  * Factory for macro instructions which were created from parameterized
@@ -27,11 +27,11 @@ public class MacroInstructionForParameterizedCommandFactory implements IMacroIns
 	private CommandManager fCommandManager;
 
 	@Inject
-	private KeyBindingDispatcher fDispatcher;
+	private EHandlerService fHandlerService;
 
 	@Override
 	public IMacroInstruction create(Map<String, String> stringMap) throws Exception {
-		return MacroInstructionForParameterizedCommand.fromMap(stringMap, fCommandManager, fDispatcher);
+		return MacroInstructionForParameterizedCommand.fromMap(stringMap, fCommandManager, fHandlerService);
 	}
 
 }

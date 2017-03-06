@@ -12,15 +12,20 @@ package org.eclipse.e4.ui.macros.internal.keybindings;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.CommandManager;
 import org.eclipse.core.commands.ParameterizedCommand;
-import org.eclipse.core.commands.common.CommandException;
 import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.e4.core.commands.EHandlerService;
+import org.eclipse.e4.core.commands.internal.HandlerServiceImpl;
+import org.eclipse.e4.core.contexts.EclipseContextFactory;
+import org.eclipse.e4.core.contexts.IEclipseContext;
+import org.eclipse.e4.core.macros.Activator;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
-import org.eclipse.e4.ui.bindings.keys.KeyBindingDispatcher;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.ui.PlatformUI;
 
 /**
  * A macro instruction for parameterized commands.
@@ -39,7 +44,7 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 
 	private static final String COMMAND = "command"; //$NON-NLS-1$
 
-	private KeyBindingDispatcher fDispatcher;
+	private EHandlerService fDispatcher;
 
 	private ParameterizedCommand fCmd;
 
@@ -54,7 +59,7 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 	 *            the dispatcher to be used to execute commands.
 	 */
 	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, Event event,
-			KeyBindingDispatcher keybindingDispatcher) {
+			EHandlerService keybindingDispatcher) {
 		this.fCmd = cmd;
 
 		// Create a new event (we want to make sure that only the given info is
@@ -76,10 +81,36 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		if (cmd == null) {
 			throw new RuntimeException("Parameterized command not set."); //$NON-NLS-1$
 		}
+		final EHandlerService handlerService = fDispatcher;
+		final Command command = cmd.getCommand();
+
+		final IEclipseContext staticContext = EclipseContextFactory.create("keys-staticContext"); //$NON-NLS-1$
+		staticContext.set(Event.class, this.fEvent);
+
+		if (!command.isDefined()) {
+
+		}
+
 		try {
-			fDispatcher.executeCommand(cmd, this.fEvent);
-		} catch (final CommandException e) {
-			throw e;
+			// commandEnabled = handlerService.canExecute(parameterizedCommand, staticContext);
+			HandlerServiceImpl.lookUpHandler(
+					PlatformUI.getWorkbench().getService(IEclipseContext.class).getActiveLeaf(), command.getId());
+			// if (obj != null) {
+			// if (obj instanceof IHandler) {
+			// commandHandled = ((IHandler) obj).isHandled();
+			// } else {
+			// commandHandled = true;
+			// }
+			// }
+
+			handlerService.executeHandler(cmd, staticContext);
+			final Object commandException = staticContext.get(HandlerServiceImpl.HANDLER_EXCEPTION);
+			if (commandException instanceof Exception) {
+				Activator.log((Exception) commandException);
+			}
+
+		} finally {
+			staticContext.dispose();
 		}
 	}
 
@@ -124,7 +155,7 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 	 *             if it was not possible to recreate the macro instruction.
 	 */
 	/* default */ static MacroInstructionForParameterizedCommand fromMap(Map<String, String> map, CommandManager commandManager,
-			KeyBindingDispatcher keybindingDispatcher)
+			EHandlerService keybindingDispatcher)
 			throws Exception {
 		Assert.isNotNull(commandManager);
 		Assert.isNotNull(map);
