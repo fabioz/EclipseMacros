@@ -16,6 +16,8 @@ import org.eclipse.osgi.util.NLS;
 public class Messages extends NLS {
 	private static final String BUNDLE_NAME = "org.eclipse.e4.ui.macros.internal.keybindings.messages"; //$NON-NLS-1$
 
+	public static String CommandManagerExecutionListener_CommandBlacklisted;
+
 	public static String CommandManagerExecutionListener_CommandNotRecorded;
 
 	public static String KeyBindingDispatcherInterceptor_SkipExecutionOfCommand;

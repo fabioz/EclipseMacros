@@ -126,8 +126,11 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 			// If we got to post execute something not whitelisted, it means
 			// it wasn't executed through the keybindings (otherwise we
 			// could've blacklisted it), but through some other way.
-			String message = String.format(Messages.CommandManagerExecutionListener_CommandNotRecorded, commandId);
+			String message = String.format(Messages.CommandManagerExecutionListener_CommandBlacklisted, commandId);
 			UserNotifications.showErrorMessage(message);
+
+			throw new RuntimeException(message);
+
 		} else {
 			// Ok, it's a whitelisted command. Let's check if it should
 			// actually be recorded
