@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.e4.core.macros.CancelMacroRecordingException;
 import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroInstructionFactory;
@@ -222,7 +223,7 @@ public class MacroTest {
 	}
 
 	protected void createMacroWithOneDummyMacroInstruction(MacroManager macroManager,
-			Map<String, IMacroInstructionFactory> macroInstructionIdToFactory) {
+			Map<String, IMacroInstructionFactory> macroInstructionIdToFactory) throws CancelMacroRecordingException {
 		macroManager.toggleMacroRecord(null, macroInstructionIdToFactory);
 		macroManager.addMacroInstruction(new DummyMacroInstruction("macro1"));
 		macroManager.toggleMacroRecord(null, macroInstructionIdToFactory);
