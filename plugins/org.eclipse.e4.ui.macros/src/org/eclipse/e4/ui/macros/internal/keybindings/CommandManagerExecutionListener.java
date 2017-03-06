@@ -110,6 +110,9 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 					if (commandAndTrigger.trigger instanceof Event) {
 						fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
 								commandAndTrigger.command, (Event) commandAndTrigger.trigger, this.fHandlerService));
+					} else {
+						fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
+								commandAndTrigger.command, this.fHandlerService));
 					}
 				}
 			}

@@ -44,12 +44,18 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 
 	private static final String COMMAND = "command"; //$NON-NLS-1$
 
+	private static final String NO_EVENT = "no_event"; //$NON-NLS-1$
+
 	private EHandlerService fDispatcher;
 
 	private ParameterizedCommand fCmd;
 
 	private Event fEvent;
 
+	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, EHandlerService keybindingDispatcher) {
+		this.fCmd = cmd;
+		this.fDispatcher = keybindingDispatcher;
+	}
 	/**
 	 * @param cmd
 	 *            the command recorded.
@@ -60,7 +66,7 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 	 */
 	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, Event event,
 			EHandlerService keybindingDispatcher) {
-		this.fCmd = cmd;
+		this(cmd, keybindingDispatcher);
 
 		// Create a new event (we want to make sure that only the given info is
 		// really needed on playback and don't want to keep a reference to the
@@ -72,7 +78,6 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		newEvent.character = event.character;
 
 		this.fEvent = newEvent;
-		this.fDispatcher = keybindingDispatcher;
 	}
 
 	@Override
@@ -145,6 +150,9 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		String serialized = fCmd.serialize();
 		Assert.isNotNull(serialized);
 		map.put(COMMAND, serialized);
+		if (this.fEvent == null) {
+			map.put(NO_EVENT, NO_EVENT);
+		}
 		map.put(KEY_CODE, Integer.toString(fEvent.keyCode));
 		map.put(STATE_MASK, Integer.toString(fEvent.stateMask));
 		map.put(TYPE, Integer.toString(fEvent.type));
@@ -172,14 +180,15 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		Assert.isNotNull(map);
 		Assert.isNotNull(keybindingDispatcher);
 		ParameterizedCommand cmd = commandManager.deserialize(map.get(COMMAND));
+		if (map.containsKey(NO_EVENT)) {
+			return new MacroInstructionForParameterizedCommand(cmd, keybindingDispatcher);
+		}
 		Event event = new Event();
 		event.keyCode = Integer.parseInt(map.get(KEY_CODE));
 		event.stateMask = Integer.parseInt(map.get(STATE_MASK));
 		event.type = Integer.parseInt(map.get(TYPE));
 		event.character = map.get(CHARACTER).charAt(0);
-		MacroInstructionForParameterizedCommand macroInstruction = new MacroInstructionForParameterizedCommand(cmd,
-				event, keybindingDispatcher);
-		return macroInstruction;
+		return new MacroInstructionForParameterizedCommand(cmd, event, keybindingDispatcher);
 	}
 }
 
