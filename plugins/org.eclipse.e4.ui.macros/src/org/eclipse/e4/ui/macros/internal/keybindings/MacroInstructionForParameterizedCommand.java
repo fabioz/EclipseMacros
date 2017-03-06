@@ -24,8 +24,8 @@ import org.eclipse.e4.core.contexts.IEclipseContext;
 import org.eclipse.e4.core.macros.Activator;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
-import org.eclipse.ui.PlatformUI;
 
 /**
  * A macro instruction for parameterized commands.
@@ -88,20 +88,31 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		staticContext.set(Event.class, this.fEvent);
 
 		if (!command.isDefined()) {
-
+			throw new RuntimeException(String.format("Command: %s not defined.", cmd.getId())); //$NON-NLS-1$
 		}
 
 		try {
-			// commandEnabled = handlerService.canExecute(parameterizedCommand, staticContext);
-			HandlerServiceImpl.lookUpHandler(
-					PlatformUI.getWorkbench().getService(IEclipseContext.class).getActiveLeaf(), command.getId());
-			// if (obj != null) {
-			// if (obj instanceof IHandler) {
-			// commandHandled = ((IHandler) obj).isHandled();
-			// } else {
-			// commandHandled = true;
-			// }
-			// }
+			boolean commandEnabled = handlerService.canExecute(cmd, staticContext);
+			if (!commandEnabled) {
+				// This is to handle the following case:
+				// 1. Open an editor and record something which requires undo
+				// 2. Close editor
+				// 3. Playback macro: at this point, the undo action is actually
+				// disabled, so, we need to process the current events in the
+				// queue and wait for it to be enabled (or fail if it can't be
+				// enabled in the current situation).
+				for (int i = 0; i < 100; i++) {
+					Display.getCurrent().readAndDispatch();
+					commandEnabled = handlerService.canExecute(cmd, staticContext);
+					if (commandEnabled) {
+						break;
+					}
+				}
+				commandEnabled = handlerService.canExecute(cmd, staticContext);
+				if (!commandEnabled) {
+					throw new RuntimeException(String.format("Command: %s not enabled.", cmd.getId())); //$NON-NLS-1$
+				}
+			}
 
 			handlerService.executeHandler(cmd, staticContext);
 			final Object commandException = staticContext.get(HandlerServiceImpl.HANDLER_EXCEPTION);
