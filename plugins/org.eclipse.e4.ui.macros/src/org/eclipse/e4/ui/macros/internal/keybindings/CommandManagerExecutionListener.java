@@ -20,43 +20,43 @@ import org.eclipse.e4.core.commands.EHandlerService;
 import org.eclipse.e4.core.macros.Activator;
 import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.ui.macros.internal.UserNotifications;
-import org.eclipse.e4.ui.macros.internal.actions.ToggleMacroRecordAction;
 import org.eclipse.swt.widgets.Event;
 
 /**
- * Used to give notifications to the user in case some command goes through and
- * it didn't go through the keybinding dispatcher (the user is meant to use only
- * the keyboard to execute commands, not activate other UI elements during macro
- * recording, so, if he fails to do so, let him know about it).
+ * Used to blacklist and record commands being executed and record whitelisted commands.
  */
 public class CommandManagerExecutionListener implements IExecutionListener {
 
 	private EMacroService fMacroService;
 
-	private static class CommandAndTrigger {
+	private static class ParameterizedCommandAndTrigger {
 
-		private ParameterizedCommand command;
+		private ParameterizedCommand parameterizedCommand;
 		private Object trigger;
 
-		/**
-		 * @param command
-		 * @param trigger
-		 */
-		public CommandAndTrigger(ParameterizedCommand command, Object trigger) {
-			this.command = command;
+		private ParameterizedCommandAndTrigger(ParameterizedCommand parameterizedCommand, Object trigger) {
+			this.parameterizedCommand = parameterizedCommand;
 			this.trigger = trigger;
 		}
 
 	}
 
-	private Stack<CommandAndTrigger> fCommandsStack = new Stack<>();
+	/**
+	 * A stack to keep information on the parameterized commands and what
+	 * triggered it.
+	 */
+	private Stack<ParameterizedCommandAndTrigger> fParameterizedCommandsAndTriggerStack = new Stack<>();
+
+	/**
+	 * The handler service.
+	 */
 	private EHandlerService fHandlerService;
 
 	/**
 	 * @param macroService
 	 *            the macro service
-	 * @param interceptor
-	 *            the interceptor which is used to actually record commands.
+	 * @param handlerService
+	 *            the handler service (used to execute actions).
 	 */
 	public CommandManagerExecutionListener(EMacroService macroService, EHandlerService handlerService) {
 		this.fMacroService = macroService;
@@ -73,30 +73,30 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 		popCommand(commandId);
 	}
 
-	private CommandAndTrigger popCommand(String commandId) {
-		if (!fCommandsStack.empty()) {
-			CommandAndTrigger commandAndTrigger = fCommandsStack.peek();
-			if (commandId.equals(commandAndTrigger.command.getCommand().getId())) {
+	private ParameterizedCommandAndTrigger popCommand(String commandId) {
+		if (!fParameterizedCommandsAndTriggerStack.empty()) {
+			ParameterizedCommandAndTrigger commandAndTrigger = fParameterizedCommandsAndTriggerStack.peek();
+			if (commandId.equals(commandAndTrigger.parameterizedCommand.getCommand().getId())) {
 				return commandAndTrigger;
 			}
 			Activator.log(new RuntimeException(
-					String.format("Expected to find %s in command stack. Found: %s", commandId, //$NON-NLS-1$
-							commandAndTrigger.command.getId())));
-			fCommandsStack.clear();
+					String.format("Expected to find %s in parameterizedCommand stack. Found: %s", commandId, //$NON-NLS-1$
+							commandAndTrigger.parameterizedCommand.getId())));
+			fParameterizedCommandsAndTriggerStack.clear();
 		}
 		return null;
 	}
 
 	@Override
 	public void postExecuteSuccess(String commandId, Object returnValue) {
-		CommandAndTrigger commandAndTrigger = popCommand(commandId);
+		ParameterizedCommandAndTrigger commandAndTrigger = popCommand(commandId);
+		if (commandAndTrigger == null) {
+			// Can happen if we didn't get the preExecute (i.e.: the toggle
+			// macro record is executed and post executed only (the pre execute
+			// is skipped because recording still wasn't in place).
+			return;
+		}
 		if (fMacroService.isRecording()) {
-			if (ToggleMacroRecordAction.COMMAND_ID.equals(commandId)) {
-				// It's an exception because it's the command that starts it all
-				// and thus isn't initially checked in the keybindings
-				// interceptor.
-				return;
-			}
 			if (!fMacroService.isCommandWhitelisted(commandId)) {
 				// If we got to post execute something not whitelisted, it means
 				// it wasn't executed through the keybindings (otherwise we
@@ -104,15 +104,15 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 				String message = String.format(Messages.CommandManagerExecutionListener_CommandNotRecorded, commandId);
 				UserNotifications.showErrorMessage(message);
 			} else {
-				// Ok, it's a whitelisted command. Let's check if it should
+				// Ok, it's a whitelisted parameterizedCommand. Let's check if it should
 				// actually be recorded
 				if (fMacroService.getRecordMacroInstruction(commandId)) {
 					if (commandAndTrigger.trigger instanceof Event) {
 						fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
-								commandAndTrigger.command, (Event) commandAndTrigger.trigger, this.fHandlerService));
+								commandAndTrigger.parameterizedCommand, (Event) commandAndTrigger.trigger, this.fHandlerService));
 					} else {
 						fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
-								commandAndTrigger.command, this.fHandlerService));
+								commandAndTrigger.parameterizedCommand, this.fHandlerService));
 					}
 				}
 			}
@@ -121,7 +121,6 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 
 	@Override
 	public void preExecute(String commandId, ExecutionEvent event) {
-
 		if (!fMacroService.isCommandWhitelisted(commandId)) {
 			// If we got to post execute something not whitelisted, it means
 			// it wasn't executed through the keybindings (otherwise we
@@ -132,12 +131,12 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 			throw new RuntimeException(message);
 
 		} else {
-			// Ok, it's a whitelisted command. Let's check if it should
+			// Ok, it's a whitelisted parameterizedCommand. Let's check if it should
 			// actually be recorded
 			if (fMacroService.getRecordMacroInstruction(commandId)) {
 				ParameterizedCommand command = ParameterizedCommand.generateCommand(event.getCommand(),
 						event.getParameters());
-				fCommandsStack.add(new CommandAndTrigger(command, event.getTrigger()));
+				fParameterizedCommandsAndTriggerStack.add(new ParameterizedCommandAndTrigger(command, event.getTrigger()));
 			}
 		}
 	}

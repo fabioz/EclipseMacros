@@ -17,10 +17,10 @@ import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.core.macros.IMacroStateListener;
 
 /**
- * A macro listener that will install the KeyBindingDispatcherInterceptor when
- * in a record/playback context.
+ * A macro state listener that will install the execution listener when in a
+ * record/playback context.
  */
-public class KeyBindingDispatcherInterceptorInstaller implements IMacroStateListener {
+public class CommandManagerExecutionListenerInstaller implements IMacroStateListener {
 
 
 	@Inject

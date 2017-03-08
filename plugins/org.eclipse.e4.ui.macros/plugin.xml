@@ -23,7 +23,7 @@
    <extension
          point="org.eclipse.e4.core.macros.macroStateListeners">
       <macroStateListener
-            class="org.eclipse.e4.ui.macros.internal.keybindings.KeyBindingDispatcherInterceptorInstaller">
+            class="org.eclipse.e4.ui.macros.internal.keybindings.CommandManagerExecutionListenerInstaller">
       </macroStateListener>
       <macroStateListener
             class="org.eclipse.e4.ui.macros.internal.validation.CurrentEditorValidationInstaller">

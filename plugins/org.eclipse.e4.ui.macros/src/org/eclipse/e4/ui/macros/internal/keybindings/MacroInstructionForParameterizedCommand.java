@@ -46,15 +46,15 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 
 	private static final String NO_EVENT = "no_event"; //$NON-NLS-1$
 
-	private EHandlerService fDispatcher;
+	private EHandlerService fHandlerService;
 
 	private ParameterizedCommand fCmd;
 
 	private Event fEvent;
 
-	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, EHandlerService keybindingDispatcher) {
+	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, EHandlerService handlerService) {
 		this.fCmd = cmd;
-		this.fDispatcher = keybindingDispatcher;
+		this.fHandlerService = handlerService;
 	}
 	/**
 	 * @param cmd
@@ -86,7 +86,7 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		if (cmd == null) {
 			throw new RuntimeException("Parameterized command not set."); //$NON-NLS-1$
 		}
-		final EHandlerService handlerService = fDispatcher;
+		final EHandlerService handlerService = fHandlerService;
 		final Command command = cmd.getCommand();
 
 		final IEclipseContext staticContext = EclipseContextFactory.create("keys-staticContext"); //$NON-NLS-1$
