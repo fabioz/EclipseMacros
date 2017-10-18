@@ -61,7 +61,12 @@ public class UserNotifications {
 		// Make it visible to the user.
 		IStatusLineManager statusLineManager = UserNotifications.getStatusLineManager();
 		if (statusLineManager == null) {
-			MessageDialog.openWarning(UserNotifications.getParent(), Messages.Activator_ErrorMacroRecording, message);
+			Shell parent = UserNotifications.getParent();
+			if (parent == null) {
+				System.err.println(Messages.Activator_ErrorMacroRecording + ": " + message); //$NON-NLS-1$
+			} else {
+				MessageDialog.openWarning(parent, Messages.Activator_ErrorMacroRecording, message);
+			}
 		} else {
 			statusLineManager.setErrorMessage(message);
 			Display current = Display.getCurrent();

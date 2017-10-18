@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.e4.core.macros;
 
-import java.util.Set;
-
 /**
  * Extension with the public API for dealing with macros.
  *
@@ -138,20 +136,8 @@ public interface EMacroService {
 
 	// Deal with managing accepted commands during macro record/playback.
 	// (by default should load the commands accepted
-	// through the org.eclipse.e4.core.macros.whitelistedCommands extension point,
+	// through the org.eclipse.e4.core.macros.customizedCommands extension point,
 	// but it's possible to programmatically change it as needed later on).
-
-	/**
-	 * @param commandId
-	 *            the id of the command to be checked.
-	 *
-	 * @return whether the command is whitelisted to be executed when recording
-	 *         macros.
-	 *
-	 * @see org.eclipse.e4.core.macros.whitelistedCommands extension point
-	 */
-	@SuppressWarnings("javadoc")
-	boolean isCommandWhitelisted(String commandId);
 
 	/**
 	 * @param commandId
@@ -162,40 +148,26 @@ public interface EMacroService {
 	 *         {@link org.eclipse.e4.core.macros.IMacroInstruction} will be
 	 *         automatically created to play it back when in record mode).
 	 *
-	 * @see org.eclipse.e4.core.macros.whitelistedCommands extension point
+	 * @see org.eclipse.e4.core.macros.customizedCommands extension point
 	 */
 	@SuppressWarnings("javadoc")
 	boolean getRecordMacroInstruction(String commandId);
 
 	/**
 	 * @param commandId
-	 *            the command id to be accepted or rejected during macro
-	 *            record/playback.
-	 *
-	 * @param whitelistCommand
-	 *            true means the command will be allowed to be executed during
-	 *            macro record/playback and false means it'll be rejected during
-	 *            macro record/playback.
+	 *            the command id to be customized during macro record/playback.
 	 *
 	 * @param recordMacroInstruction
-	 *            if true, the command activation will be automatically recorded
-	 *            in the macro playback mode -- which means that an
+	 *            if true, the command activation will be automatically recorded in
+	 *            the macro playback mode -- which means that an
 	 *            {@link org.eclipse.e4.core.macros.IMacroInstruction} will be
 	 *            automatically created to play it back when in record mode (not
 	 *            applicable if whitelistCommand == false).
 	 *
-	 * @see org.eclipse.e4.core.macros.whitelistedCommands extension point
+	 * @see org.eclipse.e4.core.macros.customizedCommands extension point
 	 */
 	@SuppressWarnings("javadoc")
-	void setCommandWhitelisted(String commandId, boolean whitelistCommand, boolean recordMacroInstruction);
-
-	/**
-	 * @return the currently whitelisted commands.
-	 *
-	 * @see org.eclipse.e4.core.macros.whitelistedCommands extension point
-	 */
-	@SuppressWarnings("javadoc")
-	Set<String> getCommandsWhitelisted();
+	void setCustomizedCommand(String commandId, boolean recordMacroInstruction);
 
 	/**
 	 * Adds a macro instructions listener (it may be added to validate the

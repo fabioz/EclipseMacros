@@ -54,6 +54,12 @@ public class MacroStyledTextInstaller implements IMacroStateListener {
 	private static final String CONTENT_ASSIST_ENABLED = "contentAssistEnabled";//$NON-NLS-1$
 
 	/**
+	 * Constant used to save whether the quick assist was enabled before being
+	 * disabled in disableCodeCompletion.
+	 */
+	private static final String QUICK_ASSIST_ENABLED = "quickAssistEnabled";//$NON-NLS-1$
+
+	/**
 	 * @param editorPart
 	 * @param styledText
 	 */
@@ -75,14 +81,8 @@ public class MacroStyledTextInstaller implements IMacroStateListener {
 		if (textOperationTarget instanceof ITextOperationTargetExtension) {
 			ITextOperationTargetExtension targetExtension = (ITextOperationTargetExtension) textOperationTarget;
 			if (textOperationTarget instanceof ITextOperationTargetExtension) {
-				Boolean contentAssistProposalsBeforMacroMode = memento.getBoolean(CONTENT_ASSIST_ENABLED);
-				if (contentAssistProposalsBeforMacroMode != null) {
-					if ((contentAssistProposalsBeforMacroMode).booleanValue()) {
-						targetExtension.enableOperation(ISourceViewer.CONTENTASSIST_PROPOSALS, true);
-					} else {
-						targetExtension.enableOperation(ISourceViewer.CONTENTASSIST_PROPOSALS, false);
-					}
-				}
+				restore(memento, targetExtension, ISourceViewer.CONTENTASSIST_PROPOSALS, CONTENT_ASSIST_ENABLED);
+				restore(memento, targetExtension, ISourceViewer.QUICK_ASSIST, QUICK_ASSIST_ENABLED);
 			}
 		}
 	}
@@ -103,10 +103,29 @@ public class MacroStyledTextInstaller implements IMacroStateListener {
 
 			// Disable content assist and mark it to be restored
 			// later on
-			if (textOperationTarget.canDoOperation(ISourceViewer.CONTENTASSIST_PROPOSALS)) {
-				memento.putBoolean(CONTENT_ASSIST_ENABLED, true);
-				targetExtension.enableOperation(ISourceViewer.CONTENTASSIST_PROPOSALS, false);
+			disable(memento, textOperationTarget, targetExtension, ISourceViewer.CONTENTASSIST_PROPOSALS,
+					CONTENT_ASSIST_ENABLED);
+			disable(memento, textOperationTarget, targetExtension, ISourceViewer.QUICK_ASSIST, QUICK_ASSIST_ENABLED);
+		}
+	}
+
+	private void restore(IMemento memento, ITextOperationTargetExtension targetExtension, int operation,
+			String preference) {
+		Boolean contentAssistProposalsBeforMacroMode = memento.getBoolean(preference);
+		if (contentAssistProposalsBeforMacroMode != null) {
+			if ((contentAssistProposalsBeforMacroMode).booleanValue()) {
+				targetExtension.enableOperation(operation, true);
+			} else {
+				targetExtension.enableOperation(operation, false);
 			}
+		}
+	}
+
+	private void disable(IMemento memento, ITextOperationTarget textOperationTarget,
+			ITextOperationTargetExtension targetExtension, int operation, String preference) {
+		if (textOperationTarget.canDoOperation(operation)) {
+			memento.putBoolean(preference, true);
+			targetExtension.enableOperation(operation, false);
 		}
 	}
 

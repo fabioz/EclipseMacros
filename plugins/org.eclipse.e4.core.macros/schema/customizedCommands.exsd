@@ -3,15 +3,13 @@
 <schema targetNamespace="org.eclipse.e4.ui.macros" xmlns="http://www.w3.org/2001/XMLSchema">
 <annotation>
       <appinfo>
-         <meta.schema plugin="org.eclipse.e4.ui.macros" id="whitelistedCommands" name=""/>
+         <meta.schema plugin="org.eclipse.e4.ui.macros" id="customizedCommands" name=""/>
       </appinfo>
       <documentation>
-         Defines commands that will be whitelisted during a macro record/playback operation and whether 
+         Defines commands that will be customized during a macro record/playback operation -- by default,
 a macro instruction should be automatically added when in macro record mode to execute that
-command during playback.
-
-Commands which aren&apos;t registered through this extension point are considered blacklisted
-and won&apos;t be executed.
+command during playback and this extension allows customization over that (i.e.: currently
+to skip recording a command).
 
 It&apos;s also possible to programatically add commands to be whitelisted during macro record/playback through the org.eclipse.e4.core.macros.EMacroService.
       </documentation>

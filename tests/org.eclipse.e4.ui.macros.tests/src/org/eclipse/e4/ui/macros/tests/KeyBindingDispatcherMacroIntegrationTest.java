@@ -18,8 +18,6 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 
 import org.eclipse.core.commands.Category;
 import org.eclipse.core.commands.ParameterizedCommand;
@@ -181,13 +179,21 @@ public class KeyBindingDispatcherMacroIntegrationTest {
 		Event event = new Event();
 		event.type = SWT.KeyDown;
 		event.keyCode = SWT.CTRL;
-		shell.notifyListeners(SWT.KeyDown, event);
+		try {
+			shell.notifyListeners(SWT.KeyDown, event);
+		} catch (Exception e) {
+			// can happen if command is blacklisted.
+		}
 
 		event = new Event();
 		event.type = SWT.KeyDown;
 		event.stateMask = SWT.CTRL;
 		event.keyCode = 'A';
-		shell.notifyListeners(SWT.KeyDown, event);
+		try {
+			shell.notifyListeners(SWT.KeyDown, event);
+		} catch (Exception e) {
+			// can happen if command is blacklisted.
+		}
 	}
 
 	@Rule
@@ -199,9 +205,8 @@ public class KeyBindingDispatcherMacroIntegrationTest {
 		Shell shell = new Shell(display, SWT.NONE);
 
 		// Whitelist command and record
-		HashMap<String, Boolean> macroWhitelistedCommandIds = new HashMap<>();
-		macroWhitelistedCommandIds.put(TEST_ID1, true);
-		setWhitelistedCommandIds(macroService, macroWhitelistedCommandIds);
+		HashMap<String, Boolean> macroCustomizedCommandIds = new HashMap<>();
+		macroCustomizedCommandIds.put(TEST_ID1, true);
 
 		macroService.toggleMacroRecord();
 		assertTrue(macroService.isRecording());
@@ -215,31 +220,6 @@ public class KeyBindingDispatcherMacroIntegrationTest {
 		handler.q2 = false;
 		macroService.playbackLastMacro();
 		assertTrue(handler.q2);
-
-		// Blacklist command
-		handler.q2 = false;
-		setWhitelistedCommandIds(macroService, new HashMap<>());
-
-		macroService.toggleMacroRecord();
-		assertTrue(macroService.isRecording());
-		notifyCtrlA(shell);
-		macroService.toggleMacroRecord();
-		assertFalse(handler.q2);
-	}
-
-	private void setWhitelistedCommandIds(EMacroService macroService, Map<String, Boolean> macroWhitelistedCommandIds)
-			throws Exception {
-
-		// Blacklist all commands there
-		Set<String> commandsWhitelisted = macroService.getCommandsWhitelisted();
-		for (String commandId : commandsWhitelisted) {
-			macroService.setCommandWhitelisted(commandId, false, false);
-		}
-
-		// Whitelist the ones we want.
-		for (Entry<String, Boolean> entry : macroWhitelistedCommandIds.entrySet()) {
-			macroService.setCommandWhitelisted(entry.getKey(), true, entry.getValue());
-		}
 	}
 
 	@Test
@@ -258,11 +238,6 @@ public class KeyBindingDispatcherMacroIntegrationTest {
 		assertFalse(handler.q2);
 
 		Shell shell = new Shell(display, SWT.NONE);
-
-		// Accept/record command
-		HashMap<String, Boolean> macroWhitelistedCommandIds = new HashMap<>();
-		macroWhitelistedCommandIds.put(TEST_ID1, true);
-		setWhitelistedCommandIds(macroService, macroWhitelistedCommandIds);
 
 		macroService.toggleMacroRecord();
 		notifyCtrlA(shell);

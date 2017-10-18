@@ -12,46 +12,33 @@ package org.eclipse.e4.ui.macros.internal.keybindings;
 
 import javax.inject.Inject;
 import org.eclipse.core.commands.CommandManager;
+import org.eclipse.e4.core.commands.EHandlerService;
 import org.eclipse.e4.core.macros.EMacroService;
 import org.eclipse.e4.core.macros.IMacroStateListener;
-import org.eclipse.e4.ui.bindings.keys.KeyBindingDispatcher;
 
 /**
- * A macro listener that will install the KeyBindingDispatcherInterceptor when
- * in a record/playback context.
+ * A macro state listener that will install the execution listener when in a
+ * record/playback context.
  */
-public class KeyBindingDispatcherInterceptorInstaller implements IMacroStateListener {
+public class CommandManagerExecutionListenerInstaller implements IMacroStateListener {
 
-	@Inject
-	private KeyBindingDispatcher fDispatcher;
 
 	@Inject
 	private CommandManager fCommandManager;
 
-	/**
-	 * The interceptor for keybinding commands (created only when actually in a
-	 * record/playback context, null otherwise).
-	 */
-	private KeyBindingDispatcherInterceptor fInterceptor;
+	@Inject
+	private EHandlerService fHandlerService;
 
 	private CommandManagerExecutionListener fCommandManagerExecutionListener;
 
 	@Override
 	public void macroStateChanged(EMacroService macroService) {
 		if (macroService.isRecording() || macroService.isPlayingBack()) {
-			if (fInterceptor == null) {
-				fInterceptor = new KeyBindingDispatcherInterceptor(macroService, fDispatcher);
-				fDispatcher.addInterceptor(fInterceptor);
-			}
 			if (fCommandManagerExecutionListener == null) {
-				fCommandManagerExecutionListener = new CommandManagerExecutionListener(macroService, fInterceptor);
+				fCommandManagerExecutionListener = new CommandManagerExecutionListener(macroService, fHandlerService);
 				fCommandManager.addExecutionListener(fCommandManagerExecutionListener);
 			}
 		} else {
-			if (fInterceptor != null) {
-				fDispatcher.removeInterceptor(fInterceptor);
-				fInterceptor = null;
-			}
 			if (fCommandManagerExecutionListener != null) {
 				fCommandManager.removeExecutionListener(fCommandManagerExecutionListener);
 				fCommandManagerExecutionListener = null;

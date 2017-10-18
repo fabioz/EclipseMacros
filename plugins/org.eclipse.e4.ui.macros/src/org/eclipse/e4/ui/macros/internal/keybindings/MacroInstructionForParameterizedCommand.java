@@ -12,14 +12,19 @@ package org.eclipse.e4.ui.macros.internal.keybindings;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.CommandManager;
 import org.eclipse.core.commands.ParameterizedCommand;
-import org.eclipse.core.commands.common.CommandException;
 import org.eclipse.core.commands.common.NotDefinedException;
 import org.eclipse.core.runtime.Assert;
+import org.eclipse.e4.core.commands.EHandlerService;
+import org.eclipse.e4.core.commands.internal.HandlerServiceImpl;
+import org.eclipse.e4.core.contexts.EclipseContextFactory;
+import org.eclipse.e4.core.contexts.IEclipseContext;
+import org.eclipse.e4.core.macros.Activator;
 import org.eclipse.e4.core.macros.IMacroInstruction;
 import org.eclipse.e4.core.macros.IMacroPlaybackContext;
-import org.eclipse.e4.ui.bindings.keys.KeyBindingDispatcher;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 
 /**
@@ -39,12 +44,18 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 
 	private static final String COMMAND = "command"; //$NON-NLS-1$
 
-	private KeyBindingDispatcher fDispatcher;
+	private static final String NO_EVENT = "no_event"; //$NON-NLS-1$
+
+	private EHandlerService fHandlerService;
 
 	private ParameterizedCommand fCmd;
 
 	private Event fEvent;
 
+	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, EHandlerService handlerService) {
+		this.fCmd = cmd;
+		this.fHandlerService = handlerService;
+	}
 	/**
 	 * @param cmd
 	 *            the command recorded.
@@ -54,8 +65,8 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 	 *            the dispatcher to be used to execute commands.
 	 */
 	public MacroInstructionForParameterizedCommand(ParameterizedCommand cmd, Event event,
-			KeyBindingDispatcher keybindingDispatcher) {
-		this.fCmd = cmd;
+			EHandlerService keybindingDispatcher) {
+		this(cmd, keybindingDispatcher);
 
 		// Create a new event (we want to make sure that only the given info is
 		// really needed on playback and don't want to keep a reference to the
@@ -67,7 +78,6 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		newEvent.character = event.character;
 
 		this.fEvent = newEvent;
-		this.fDispatcher = keybindingDispatcher;
 	}
 
 	@Override
@@ -76,10 +86,47 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		if (cmd == null) {
 			throw new RuntimeException("Parameterized command not set."); //$NON-NLS-1$
 		}
+		final EHandlerService handlerService = fHandlerService;
+		final Command command = cmd.getCommand();
+
+		final IEclipseContext staticContext = EclipseContextFactory.create("keys-staticContext"); //$NON-NLS-1$
+		staticContext.set(Event.class, this.fEvent);
+
+		if (!command.isDefined()) {
+			throw new RuntimeException(String.format("Command: %s not defined.", cmd.getId())); //$NON-NLS-1$
+		}
+
 		try {
-			fDispatcher.executeCommand(cmd, this.fEvent);
-		} catch (final CommandException e) {
-			throw e;
+			boolean commandEnabled = handlerService.canExecute(cmd, staticContext);
+			if (!commandEnabled) {
+				// This is to handle the following case:
+				// 1. Open an editor and record something which requires undo
+				// 2. Close editor
+				// 3. Playback macro: at this point, the undo action is actually
+				// disabled, so, we need to process the current events in the
+				// queue and wait for it to be enabled (or fail if it can't be
+				// enabled in the current situation).
+				for (int i = 0; i < 100; i++) {
+					Display.getCurrent().readAndDispatch();
+					commandEnabled = handlerService.canExecute(cmd, staticContext);
+					if (commandEnabled) {
+						break;
+					}
+				}
+				commandEnabled = handlerService.canExecute(cmd, staticContext);
+				if (!commandEnabled) {
+					throw new RuntimeException(String.format("Command: %s not enabled.", cmd.getId())); //$NON-NLS-1$
+				}
+			}
+
+			handlerService.executeHandler(cmd, staticContext);
+			final Object commandException = staticContext.get(HandlerServiceImpl.HANDLER_EXCEPTION);
+			if (commandException instanceof Exception) {
+				Activator.log((Exception) commandException);
+			}
+
+		} finally {
+			staticContext.dispose();
 		}
 	}
 
@@ -103,6 +150,9 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 		String serialized = fCmd.serialize();
 		Assert.isNotNull(serialized);
 		map.put(COMMAND, serialized);
+		if (this.fEvent == null) {
+			map.put(NO_EVENT, NO_EVENT);
+		}
 		map.put(KEY_CODE, Integer.toString(fEvent.keyCode));
 		map.put(STATE_MASK, Integer.toString(fEvent.stateMask));
 		map.put(TYPE, Integer.toString(fEvent.type));
@@ -124,20 +174,21 @@ public class MacroInstructionForParameterizedCommand implements IMacroInstructio
 	 *             if it was not possible to recreate the macro instruction.
 	 */
 	/* default */ static MacroInstructionForParameterizedCommand fromMap(Map<String, String> map, CommandManager commandManager,
-			KeyBindingDispatcher keybindingDispatcher)
+			EHandlerService keybindingDispatcher)
 			throws Exception {
 		Assert.isNotNull(commandManager);
 		Assert.isNotNull(map);
 		Assert.isNotNull(keybindingDispatcher);
 		ParameterizedCommand cmd = commandManager.deserialize(map.get(COMMAND));
+		if (map.containsKey(NO_EVENT)) {
+			return new MacroInstructionForParameterizedCommand(cmd, keybindingDispatcher);
+		}
 		Event event = new Event();
 		event.keyCode = Integer.parseInt(map.get(KEY_CODE));
 		event.stateMask = Integer.parseInt(map.get(STATE_MASK));
 		event.type = Integer.parseInt(map.get(TYPE));
 		event.character = map.get(CHARACTER).charAt(0);
-		MacroInstructionForParameterizedCommand macroInstruction = new MacroInstructionForParameterizedCommand(cmd,
-				event, keybindingDispatcher);
-		return macroInstruction;
+		return new MacroInstructionForParameterizedCommand(cmd, event, keybindingDispatcher);
 	}
 }
 
