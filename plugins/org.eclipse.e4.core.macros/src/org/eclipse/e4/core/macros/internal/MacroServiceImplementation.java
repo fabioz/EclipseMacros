@@ -12,9 +12,7 @@ package org.eclipse.e4.core.macros.internal;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
@@ -251,59 +249,47 @@ public class MacroServiceImplementation implements EMacroService {
 	 * they should be recorded as a macro instruction to be played back later
 	 * on.
 	 */
-	private Map<String, Boolean> fWhitelistedCommandIds;
+	private Map<String, Boolean> fCustomizedCommandIds;
 
 	/**
 	 * @return a set with the commands that are accepted when macro recording.
 	 */
-	private Map<String, Boolean> getInternalCommandsWhitelisted() {
-		if (fWhitelistedCommandIds == null) {
-			fWhitelistedCommandIds = new HashMap<>();
+	private Map<String, Boolean> getInternalCustomizedCommands() {
+		if (fCustomizedCommandIds == null) {
+			fCustomizedCommandIds = new HashMap<>();
 			if (fEclipseContext != null) {
 				IExtensionRegistry registry = fEclipseContext.get(IExtensionRegistry.class);
 				if (registry != null) {
 					for (IConfigurationElement ce : registry
-							.getConfigurationElementsFor("org.eclipse.e4.core.macros.whitelistedCommands")) { //$NON-NLS-1$
-						if ("whitelistedCommand".equals(ce.getName()) && ce.getAttribute("id") != null //$NON-NLS-1$ //$NON-NLS-2$
+							.getConfigurationElementsFor("org.eclipse.e4.core.macros.customizedCommands")) { //$NON-NLS-1$
+						if ("customizedCommand".equals(ce.getName()) && ce.getAttribute("id") != null //$NON-NLS-1$ //$NON-NLS-2$
 								&& ce.getAttribute("recordMacroInstruction") != null) { //$NON-NLS-1$
 							Boolean recordMacroInstruction = Boolean
 									.parseBoolean(ce.getAttribute("recordMacroInstruction")) //$NON-NLS-1$
 											? Boolean.TRUE
 											: Boolean.FALSE;
-							fWhitelistedCommandIds.put(ce.getAttribute("id"), recordMacroInstruction); //$NON-NLS-1$
+							fCustomizedCommandIds.put(ce.getAttribute("id"), recordMacroInstruction); //$NON-NLS-1$
 						}
 					}
 				}
 			}
 		}
-		return fWhitelistedCommandIds;
-	}
-
-	@Override
-	public boolean isCommandWhitelisted(String commandId) {
-		return getInternalCommandsWhitelisted().containsKey(commandId);
+		return fCustomizedCommandIds;
 	}
 
 	@Override
 	public boolean getRecordMacroInstruction(String commandId) {
-		Map<String, Boolean> macroWhitelistedCommands = getInternalCommandsWhitelisted();
-		return macroWhitelistedCommands.get(commandId);
-	}
-
-	@Override
-	public void setCommandWhitelisted(String commandId, boolean whitelistCommand, boolean recordMacroInstruction) {
-		if (whitelistCommand) {
-			getInternalCommandsWhitelisted().put(commandId, recordMacroInstruction);
-		} else {
-			getInternalCommandsWhitelisted().remove(commandId);
+		Map<String, Boolean> macroCustomizedCommands = getInternalCustomizedCommands();
+		Boolean recordMacro = macroCustomizedCommands.get(commandId);
+		if (recordMacro == null) {
+			return true;
 		}
+		return recordMacro;
 	}
 
 	@Override
-	public Set<String> getCommandsWhitelisted() {
-		Map<String, Boolean> internalWhitelistedCommands = getInternalCommandsWhitelisted();
-		// Create a copy
-		return new HashSet<>(internalWhitelistedCommands.keySet());
+	public void setCustomizedCommand(String commandId, boolean recordMacroInstruction) {
+		getInternalCustomizedCommands().put(commandId, recordMacroInstruction);
 	}
 
 	@Override

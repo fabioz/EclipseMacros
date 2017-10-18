@@ -19,7 +19,6 @@ import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.e4.core.commands.EHandlerService;
 import org.eclipse.e4.core.macros.Activator;
 import org.eclipse.e4.core.macros.EMacroService;
-import org.eclipse.e4.ui.macros.internal.UserNotifications;
 import org.eclipse.swt.widgets.Event;
 
 /**
@@ -97,23 +96,15 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 			return;
 		}
 		if (fMacroService.isRecording()) {
-			if (!fMacroService.isCommandWhitelisted(commandId)) {
-				// If we got to post execute something not whitelisted, it means
-				// it wasn't executed through the keybindings (otherwise we
-				// could've blacklisted it), but through some other way.
-				String message = String.format(Messages.CommandManagerExecutionListener_CommandNotRecorded, commandId);
-				UserNotifications.showErrorMessage(message);
-			} else {
-				// Ok, it's a whitelisted parameterizedCommand. Let's check if it should
-				// actually be recorded
-				if (fMacroService.getRecordMacroInstruction(commandId)) {
-					if (commandAndTrigger.trigger instanceof Event) {
-						fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
-								commandAndTrigger.parameterizedCommand, (Event) commandAndTrigger.trigger, this.fHandlerService));
-					} else {
-						fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
-								commandAndTrigger.parameterizedCommand, this.fHandlerService));
-					}
+			// Record it if needed.
+			if (fMacroService.getRecordMacroInstruction(commandId)) {
+				if (commandAndTrigger.trigger instanceof Event) {
+					fMacroService.addMacroInstruction(
+							new MacroInstructionForParameterizedCommand(commandAndTrigger.parameterizedCommand,
+									(Event) commandAndTrigger.trigger, this.fHandlerService));
+				} else {
+					fMacroService.addMacroInstruction(new MacroInstructionForParameterizedCommand(
+							commandAndTrigger.parameterizedCommand, this.fHandlerService));
 				}
 			}
 		}
@@ -121,23 +112,11 @@ public class CommandManagerExecutionListener implements IExecutionListener {
 
 	@Override
 	public void preExecute(String commandId, ExecutionEvent event) {
-		if (!fMacroService.isCommandWhitelisted(commandId)) {
-			// If we got to post execute something not whitelisted, it means
-			// it wasn't executed through the keybindings (otherwise we
-			// could've blacklisted it), but through some other way.
-			String message = String.format(Messages.CommandManagerExecutionListener_CommandBlacklisted, commandId);
-			UserNotifications.showErrorMessage(message);
-
-			throw new RuntimeException(message);
-
-		} else {
-			// Ok, it's a whitelisted parameterizedCommand. Let's check if it should
-			// actually be recorded
-			if (fMacroService.getRecordMacroInstruction(commandId)) {
-				ParameterizedCommand command = ParameterizedCommand.generateCommand(event.getCommand(),
-						event.getParameters());
-				fParameterizedCommandsAndTriggerStack.add(new ParameterizedCommandAndTrigger(command, event.getTrigger()));
-			}
+		// Let's check if it should actually be recorded.
+		if (fMacroService.getRecordMacroInstruction(commandId)) {
+			ParameterizedCommand command = ParameterizedCommand.generateCommand(event.getCommand(),
+					event.getParameters());
+			fParameterizedCommandsAndTriggerStack.add(new ParameterizedCommandAndTrigger(command, event.getTrigger()));
 		}
 	}
 }

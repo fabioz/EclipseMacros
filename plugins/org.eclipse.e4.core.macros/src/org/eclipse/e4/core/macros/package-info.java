@@ -19,9 +19,8 @@ package org.eclipse.e4.core.macros;
  * </p>
  *
  * <p>
- * Still, note that while that support will be possible, currently the
- * implementation only targets the text editor and its operations (whitelisting
- * only "safe" commands).
+ * Still, note that while that support may be possible in the future, currently
+ * the implementation only targets the text editor and its operations.
  * </p>
  *
  *
@@ -42,15 +41,6 @@ package org.eclipse.e4.core.macros;
  * commands to be recorded and later played back.
  * </p>
  *
- * <p>
- * e.g.: some editors may add a closing quote or closing parenthesis
- * automatically. While it's Ok for them to make that in record mode, they have
- * to make sure that a proper action is recorded for this case and later on when
- * it's played back the same behavior is done. Things such as auto-completion
- * should also respect that (or be disabled in record mode).
- * </p>
- *
- *
  * <hr/>
  * <h3>Related APIs</h3>
  *
@@ -67,9 +57,9 @@ package org.eclipse.e4.core.macros;
  * <li>add macro instructions when in record mode;</li>
  * <li>start and stop the macro record;</li>
  * <li>playback a previous macro;</li>
- * <li>get commands whitelisted in the
- * org.eclipse.e4.core.macros.whitelistedCommands extension point;</li>
- * <li>programatically whitelist commands.</li>
+ * <li>get commands custized in the
+ * org.eclipse.e4.core.macros.customizedCommands extension point;</li>
+ * <li>programatically customize commands.</li>
  * </ul>
  * </p>
  *
@@ -195,16 +185,7 @@ package org.eclipse.e4.core.macros;
  * </p>
  *
  * <p>
- * {@link org.eclipse.ui.texteditor.AbstractTextEditor}
- * </p>
- *
- * <p>
- * -- Note: editors inheriting AbstractTextEditor will actually have their code
- * completion disabled in record and playback mode by default and will also
- * record key presses in their StyledText by default. It's possible to customize
- * such behavior in subclasses by overwriting the
- * {@link org.eclipse.ui.texteditor.AbstractTextEditor#getDisableContentAssistOnMacroRecord()}
- * method.
+ * {@link org.eclipse.ui.workbench.texteditor.macros.internal.MacroStyledTextInstaller}
  * </p>
  *
  *
@@ -233,16 +214,17 @@ package org.eclipse.e4.core.macros;
  *
  * <p>
  * An actual implementation using this strategy is:
- * {@link org.eclipse.e4.ui.bindings.keys.KeyBindingDispatcher}
+ * {@link org.eclipse.e4.ui.macros.internal.keybindings.CommandManagerExecutionListener}
  * </p>
  *
  * <p>
  * -- Note: commands registered through the eclipse commands extensions will be
- * already blacklisted by default if they aren't registered in the
- * org.eclipse.e4.core.macros.whitelistedCommands extension point and their
+ * already recorded by default if they aren't registered in the
+ * org.eclipse.e4.core.macros.customizedCommands extension point and their
  * activation will already be recorded for proper playback by default (so,
  * clients only actually need to customize actions which currently aren't
- * implemented as eclipse actions).
+ * implemented as eclipse actions or to disable recording of some eclipse
+ * action).
  * </p>
  *
  * <hr/>
